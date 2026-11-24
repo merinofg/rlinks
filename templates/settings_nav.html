@@ -1,0 +1,7 @@
+<nav class="tabs" aria-label="Settings">
+  <a href="/settings/general" {% if tab == "general" %}aria-current="page"{% endif %}>General</a>
+  <a href="/settings/data" {% if tab == "data" %}aria-current="page"{% endif %}>Import &amp; export</a>
+  <a href="/settings/integrations" {% if tab == "integrations" %}aria-current="page"{% endif %}>Integrations</a>
+  <a href="/settings/account" {% if tab == "account" %}aria-current="page"{% endif %}>Account</a>
+  <a href="/admin/users" data-admin-only {% if tab == "users" %}aria-current="page"{% endif %}>Users</a>
+</nav>

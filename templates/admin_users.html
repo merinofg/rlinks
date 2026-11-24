@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Users · rlinks{% endblock %}
+{% block content %}
+<div class="form">
+  <h1>Settings</h1>
+  {% let tab = "users" %}{% include "settings_nav.html" %}
+  {% if let Some(n) = notice %}<p class="notice" role="status">{{ n }}</p>{% endif %}
+  {% if let Some(e) = error %}<p class="error" role="alert">{{ e }}</p>{% endif %}
+
+  <form class="card" method="post" action="/admin/users/action" autocomplete="off">
+    <h2>Add a user</h2>
+    <div class="inline-form">
+      <input name="username" placeholder="Username" aria-label="Username" autocapitalize="off" required>
+      <input name="password" type="password" placeholder="Password (8+ characters)" aria-label="Password"
+             autocomplete="new-password" minlength="8" required>
+      <button class="primary">Add user</button>
+    </div>
+    <label class="inline"><input type="checkbox" name="is_admin"> Admin (can manage users)</label>
+  </form>
+
+  <form class="card" method="post" action="/admin/users/action">
+    <h2>Site</h2>
+    <label>Logged-out visitors see
+      <select name="landing_page">
+        <option value="login" {% if landing_page == "login" %}selected{% endif %}>The login page</option>
+        <option value="shared_bookmarks" {% if landing_page == "shared_bookmarks" %}selected{% endif %}>Publicly shared bookmarks</option>
+      </select></label>
+    <button>Save</button>
+  </form>
+
+  <table class="tokens tag-table">
+    <thead><tr><th>User</th><th>Joined</th><th></th></tr></thead>
+    <tbody>
+      {% for r in users %}
+      <tr>
+        <td>{{ r.u.username }}{% if r.is_me %} <span class="muted">(you)</span>{% endif %}
+          {% if r.u.is_admin %}<span class="badge static">admin</span>{% endif %}
+          {% if !r.u.is_active %}<span class="badge static muted">inactive</span>{% endif %}</td>
+        <td title="{{ r.u.date_joined }}">{{ r.joined }}</td>
+        <td>
+          <div class="row-actions tag-actions">
+            <details>
+              <summary>Reset password</summary>
+              <form method="post" action="/admin/users/action" autocomplete="off">
+                <input type="hidden" name="reset_password" value="{{ r.u.id }}">
+                <input name="new_password" type="password" autocomplete="new-password" minlength="8" required
+                       aria-label="New password for {{ r.u.username }}" placeholder="New password">
+                <button>Save</button>
+              </form>
+            </details>
+            {% if !r.is_me %}
+            <form method="post" action="/admin/users/action" class="user-actions">
+              {% if r.u.is_active %}<button class="link" name="deactivate" value="{{ r.u.id }}">Deactivate</button>
+              {% else %}<button class="link" name="activate" value="{{ r.u.id }}">Activate</button>{% endif %}
+              {% if r.u.is_admin %}<button class="link" name="remove_admin" value="{{ r.u.id }}">Remove admin</button>
+              {% else %}<button class="link" name="make_admin" value="{{ r.u.id }}">Make admin</button>{% endif %}
+              <button class="link danger" name="delete" value="{{ r.u.id }}"
+                      onclick="return confirm('Delete {{ r.u.username }} and all their bookmarks? This cannot be undone.')">Delete</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Integrations · rlinks{% endblock %}
+{% block content %}
+<div class="form">
+  <h1>Settings</h1>
+  {% let tab = "integrations" %}{% include "settings_nav.html" %}
+
+  <section class="card">
+    <h2>REST API</h2>
+    <p class="muted">rlinks speaks linkding's REST API, so the
+      <a href="https://github.com/sissbruecker/linkding-extension" rel="noopener" target="_blank">linkding browser extension</a>,
+      compatible mobile apps and your own scripts work with it. Create a token, then set the server URL to
+      <code>{{ origin }}</code>.</p>
+
+    {% if let Some(key) = new_key %}
+    <div class="notice" role="status">
+      <p><strong>Your new token</strong> — copy it now, it won't be shown again.</p>
+      <input class="mono" value="{{ key }}" readonly onclick="this.select()" aria-label="New API token">
+    </div>
+    {% endif %}
+
+    {% if !tokens.is_empty() %}
+    <table class="tokens">
+      <thead><tr><th>Name</th><th>Created</th><th></th></tr></thead>
+      <tbody>
+        {% for row in tokens %}
+        <tr>
+          <td>{{ row.t.name }}</td>
+          <td title="{{ row.t.created }}">{{ row.created }}</td>
+          <td>
+            <form method="post" action="/settings/integrations/delete-api-token">
+              <input type="hidden" name="token_id" value="{{ row.t.id }}">
+              <button class="link danger" onclick="return confirm('Delete this token? Apps using it will stop working.')">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">No tokens yet.</p>
+    {% endif %}
+
+    <form class="inline-form" method="post" action="/settings/integrations/create-api-token">
+      <input name="name" placeholder="Token name, e.g. Firefox extension" maxlength="128" aria-label="Token name">
+      <button class="primary">Create token</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>RSS feeds</h2>
+    <p class="muted">Follow your bookmarks in a feed reader. Add <code>?q=</code> with a search to filter
+      (for example <code>?q=%23rust</code>). Keep these links private: anyone with them can read your bookmarks.</p>
+    <label>All bookmarks <input class="mono" value="{{ origin }}/feeds/{{ feed_key }}/all" readonly onclick="this.select()"></label>
+    <label>Unread bookmarks <input class="mono" value="{{ origin }}/feeds/{{ feed_key }}/unread" readonly onclick="this.select()"></label>
+    <label>Shared by everyone <input class="mono" value="{{ origin }}/feeds/{{ feed_key }}/shared" readonly onclick="this.select()"></label>
+    <label>Public shared (no key needed) <input class="mono" value="{{ origin }}/feeds/shared" readonly onclick="this.select()"></label>
+    <form method="post" action="/settings/integrations/reset-feed-key">
+      <button onclick="return confirm('Reset the feed links? Feed readers using the current links will stop updating.')">Reset feed links</button>
+      <small class="muted">If a feed link leaked, reset it: the old links stop working and new ones are created.</small>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Settings · rlinks{% endblock %}
+{% block content %}
+<div class="form">
+  <h1>Settings</h1>
+  {% let tab = "general" %}{% include "settings_nav.html" %}
+  <form class="card" method="post" action="/settings/general" hx-boost="false">
+    {% if saved %}<p class="notice" role="status">Settings saved.</p>{% endif %}
+    {% if let Some(e) = error %}<p class="error" role="alert">{{ e }}</p>{% endif %}
+    <h2>Appearance</h2>
+    <label>Theme
+      <select name="theme">
+        <option value="auto" {% if p.theme == "auto" %}selected{% endif %}>Match system</option>
+        <option value="light" {% if p.theme == "light" %}selected{% endif %}>Light</option>
+        <option value="dark" {% if p.theme == "dark" %}selected{% endif %}>Dark</option>
+      </select></label>
+    <label>Open bookmarks
+      <select name="bookmark_link_target">
+        <option value="_blank" {% if p.bookmark_link_target == "_blank" %}selected{% endif %}>In a new tab</option>
+        <option value="_self" {% if p.bookmark_link_target == "_self" %}selected{% endif %}>In the same tab</option>
+      </select></label>
+    <label>Bookmarks per page <input type="number" name="items_per_page" min="10" max="1000" value="{{ p.items_per_page }}"></label>
+    <label class="inline"><input type="checkbox" name="enable_favicons" {% if p.enable_favicons %}checked{% endif %}> Show favicons</label>
+    <small class="muted">Loads site icons through the favicon provider (Google by default).</small>
+    <label class="inline"><input type="checkbox" name="enable_preview_images" {% if p.enable_preview_images %}checked{% endif %}> Show preview images</label>
+    <small class="muted">Loads the page's preview image (og:image), if it has one.</small>
+
+    <h2>Bookmark list</h2>
+    <label>Dates
+      <select name="bookmark_date_display">
+        <option value="relative" {% if p.bookmark_date_display == "relative" %}selected{% endif %}>Relative (3 days ago)</option>
+        <option value="absolute" {% if p.bookmark_date_display == "absolute" %}selected{% endif %}>Absolute (2024-05-01)</option>
+        <option value="hidden" {% if p.bookmark_date_display == "hidden" %}selected{% endif %}>Hidden</option>
+      </select></label>
+    <label>Description lines <input type="number" name="bookmark_description_max_lines" min="1" max="10" value="{{ p.bookmark_description_max_lines }}"></label>
+    <label>Tag cloud
+      <select name="tag_grouping">
+        <option value="alphabetical" {% if p.tag_grouping == "alphabetical" %}selected{% endif %}>Grouped by first letter</option>
+        <option value="disabled" {% if p.tag_grouping == "disabled" %}selected{% endif %}>One list</option>
+      </select></label>
+    <label class="inline"><input type="checkbox" name="display_url" {% if p.display_url %}checked{% endif %}> Show the URL under each title</label>
+    <label class="inline"><input type="checkbox" name="permanent_notes" {% if p.permanent_notes %}checked{% endif %}> Always show notes</label>
+    <label class="inline"><input type="checkbox" name="web_archive_links" {% if p.web_archive_integration == "enabled" %}checked{% endif %}> Show Wayback Machine links</label>
+    <label class="inline"><input type="checkbox" name="hide_bundles" {% if p.hide_bundles %}checked{% endif %}> Hide bundles in the sidebar</label>
+
+    <h2>New bookmarks</h2>
+    <label class="inline"><input type="checkbox" name="default_mark_unread" {% if p.default_mark_unread %}checked{% endif %}> Mark new bookmarks as unread</label>
+    <label class="inline"><input type="checkbox" name="enable_automatic_html_snapshots" {% if p.enable_automatic_html_snapshots %}checked{% endif %}> Save an HTML snapshot of new bookmarks</label>
+    <small class="muted">A copy of the page to read later, even if it changes or goes away (shown in a bookmark's details).</small>
+    <label class="inline"><input type="checkbox" name="default_mark_shared" {% if p.default_mark_shared %}checked{% endif %}> Share new bookmarks</label>
+
+    <h2>Sharing</h2>
+    <label class="inline"><input type="checkbox" name="enable_sharing" {% if p.enable_sharing %}checked{% endif %}> Let me share bookmarks</label>
+    <small class="muted">Bookmarks you mark as shared appear under “Shared” for every user of this rlinks.</small>
+    <label class="inline"><input type="checkbox" name="enable_public_sharing" {% if p.enable_public_sharing %}checked{% endif %}> Also show my shared bookmarks publicly</label>
+    <small class="muted">Anyone can see them on the shared page and its feed, without logging in.</small>
+
+    <h2>Search</h2>
+    <label>Tag matching
+      <select name="tag_search">
+        <option value="strict" {% if p.tag_search == "strict" %}selected{% endif %}>Strict: tags need a # prefix</option>
+        <option value="lax" {% if p.tag_search == "lax" %}selected{% endif %}>Lax: plain words also match tags</option>
+      </select></label>
+
+    <h2>Auto tagging</h2>
+    <label>Rules
+      <textarea name="auto_tagging_rules" rows="6" class="mono" spellcheck="false"
+                placeholder="youtube.com video&#10;reddit.com/r/rust rust reddit">{{ p.auto_tagging_rules }}</textarea>
+      <small class="muted">One rule per line: a URL pattern followed by tags. The domain matches subdomains;
+        path, query parameters and fragment narrow it down. <code>#</code> starts a comment.</small>
+    </label>
+
+    <h2>Custom CSS</h2>
+    <label>Styles applied to every page for you
+      <textarea name="custom_css" rows="5" class="mono" spellcheck="false" placeholder=".bm-title { font-size: 1.1rem; }">{{ p.custom_css }}</textarea></label>
+
+    <button class="primary">Save</button>
+  </form>
+</div>
+{% endblock %}

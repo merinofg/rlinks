@@ -1,0 +1,9 @@
+<div id="url-check" data-title="{{ title }}" data-description="{{ description }}">
+  {% if let Some(b) = existing %}
+  <p class="notice">This URL is already bookmarked — saving updates it.
+    <a href="/bookmarks/{{ b.id }}/edit">Edit the existing bookmark</a></p>
+  {% endif %}
+  {% if !auto_tags.is_empty() %}
+  <p class="muted">Auto tags: {% for t in auto_tags %}#{{ t }} {% endfor %}</p>
+  {% endif %}
+</div>

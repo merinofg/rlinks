@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Account · rlinks{% endblock %}
+{% block content %}
+<div class="form">
+  <h1>Settings</h1>
+  {% let tab = "account" %}{% include "settings_nav.html" %}
+  {% if let Some(n) = notice %}<p class="notice" role="status">{{ n }}</p>{% endif %}
+  {% if let Some(e) = error %}<p class="error" role="alert">{{ e }}</p>{% endif %}
+  <form class="card" method="post" action="/settings/account">
+    <h2>Change password</h2>
+    <label>Current password <input name="current_password" type="password" autocomplete="current-password" required></label>
+    <label>New password <input name="new_password" type="password" autocomplete="new-password" minlength="8" required>
+      <small class="muted">At least 8 characters.</small></label>
+    <label>Repeat new password <input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required></label>
+    <button class="primary">Change password</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Tags · rlinks{% endblock %}
+{% block content %}
+<div class="form">
+  <h1>Tags</h1>
+  {% if let Some(n) = notice %}<p class="notice" role="status">{{ n }}</p>{% endif %}
+  {% if let Some(e) = error %}<p class="error" role="alert">{{ e }}</p>{% endif %}
+
+  <form class="card" method="post" action="/tags/action">
+    <h2>Merge tags</h2>
+    <p class="muted">Moves every bookmark to the target tag and deletes the others.</p>
+    <div class="inline-form">
+      <input name="merge_sources" placeholder="Tags to merge, e.g. js ecmascript" aria-label="Tags to merge" autocapitalize="off">
+      <input name="merge_target" placeholder="Into, e.g. javascript" aria-label="Target tag" autocapitalize="off">
+      <button class="primary">Merge</button>
+    </div>
+  </form>
+
+  <form class="search tags-search" method="get" action="/tags" role="search">
+    <input type="search" name="q" value="{{ q }}" placeholder="Filter tags" aria-label="Filter tags">
+    <button>Filter</button>
+  </form>
+
+  {% if tags.is_empty() %}
+  <p class="muted">{% if q.is_empty() %}No tags yet. Tags appear here once you add them to bookmarks.{% else %}No tags match “{{ q }}”.{% endif %}</p>
+  {% else %}
+  <table class="tokens tag-table">
+    <thead><tr><th>Tag</th><th>Bookmarks</th><th></th></tr></thead>
+    <tbody>
+      {% for t in tags %}
+      <tr>
+        <td><a href="/bookmarks?q=%23{{ t.name|urlencode }}">#{{ t.name }}</a></td>
+        <td>{{ t.bookmarks }}</td>
+        <td><div class="row-actions tag-actions">
+          <details>
+            <summary>Rename</summary>
+            <form method="post" action="/tags/action">
+              <input type="hidden" name="rename" value="{{ t.id }}">
+              <input name="name" value="{{ t.name }}" aria-label="New name for {{ t.name }}" maxlength="64" required>
+              <button>Save</button>
+            </form>
+          </details>
+          <form method="post" action="/tags/action">
+            <button class="link danger" name="delete" value="{{ t.id }}"
+                    onclick="return confirm('Delete this tag? Bookmarks keep everything else.')">Delete</button>
+          </form>
+        </div></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

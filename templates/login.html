@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Log in · rlinks{% endblock %}
+{% block nav %}{% endblock %}
+{% block content %}
+<form class="card narrow" method="post" action="/login" hx-boost="false">
+  <div class="login-brand">
+    <img src="/static/icon.svg" alt="" width="48" height="48">
+    <h1>rlinks</h1>
+    <p class="muted">Your bookmarks, tagged and searchable.</p>
+  </div>
+  {% if error %}<p class="error" role="alert">That username and password don't match. Try again.</p>{% endif %}
+  <label>Username <input name="username" autocomplete="username" required autofocus></label>
+  <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+  <button class="primary">Log in</button>
+</form>
+{% endblock %}

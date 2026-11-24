@@ -1,0 +1,53 @@
+# rlinks with Docker Compose. Works locally as is: SQLite database and files in the `rlinks-data`
+# volume. Settings come from `.env` next to this file (see `.env.example`); at minimum:
+#
+#   echo "LD_SECRET_KEY=$(openssl rand -hex 32)" >> .env
+#   echo "LD_SUPERUSER_NAME=admin" >> .env; echo "LD_SUPERUSER_PASSWORD=change-me" >> .env
+#   docker compose up -d        # http://localhost:9090
+
+services:
+  rlinks:
+    build: .
+    image: rlinks
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - rlinks-data:/data
+    environment:
+      # Required: signs session cookies and names stored files (>= 64 chars). Keep it stable:
+      # changing it logs everyone out.
+      LD_SECRET_KEY: ${LD_SECRET_KEY:?set LD_SECRET_KEY in .env (openssl rand -hex 32)}
+
+      LD_BIND: 0.0.0.0:9090
+      # Local storage: database in /data/linkding.db, files in /data/files/.
+      LD_DATA_DIR: /data
+
+      # Admin account created on startup if it doesn't exist (both must be set).
+      LD_SUPERUSER_NAME: ${LD_SUPERUSER_NAME:-}
+      LD_SUPERUSER_PASSWORD: ${LD_SUPERUSER_PASSWORD:-}
+
+      # Internal hosts the server may fetch from (comma-separated hostnames, `.domain` for
+      # subdomains, IPs, CIDRs, or `*`). Empty: public addresses only.
+      LD_ALLOWED_INTERNAL_HOSTS: ${LD_ALLOWED_INTERNAL_HOSTS:-}
+      # Favicon URL template with {url} or {domain}. Empty: Google's favicon service.
+      LD_FAVICON_PROVIDER: ${LD_FAVICON_PROVIDER:-}
+
+      RUST_LOG: ${RUST_LOG:-info}
+
+      # --- Optional: Cloudflare D1 as the database instead of SQLite --------------------------
+      # Token needs "D1 Edit". Create the database with `npx wrangler d1 create rlinks`.
+      # CF_ACCOUNT_ID: ${CF_ACCOUNT_ID}
+      # D1_DATABASE_ID: ${D1_DATABASE_ID}
+      # CF_API_TOKEN: ${CF_API_TOKEN}
+
+      # --- Optional: Cloudflare R2 for files instead of /data/files ---------------------------
+      # S3 API credentials for the bucket. The endpoint defaults to
+      # https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com (then CF_ACCOUNT_ID is needed too).
+      # R2_BUCKET: ${R2_BUCKET}
+      # R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      # R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      # R2_ENDPOINT: ${R2_ENDPOINT}
+
+volumes:
+  rlinks-data:

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }} · rlinks{% endblock %}
+{% block content %}
+<form class="card form" method="post" action="{{ action }}">
+  <h1>{{ heading }}</h1>
+  {% if let Some(e) = error %}<p class="error" role="alert">{{ e }}</p>{% endif %}
+  <label>Name <input name="name" value="{{ b.name }}" required maxlength="256" autofocus></label>
+  <label>Search <input name="search" value="{{ b.search }}" placeholder="e.g. rust not #video" autocapitalize="off">
+    <small class="muted">Same search syntax as the bookmark list.</small></label>
+  <label>Tags — any of <input name="any_tags" value="{{ b.any_tags }}" autocapitalize="off">
+    <small class="muted">Bookmarks with at least one of these tags.</small></label>
+  <label>Tags — all of <input name="all_tags" value="{{ b.all_tags }}" autocapitalize="off">
+    <small class="muted">Bookmarks with every one of these tags.</small></label>
+  <label>Tags — none of <input name="excluded_tags" value="{{ b.excluded_tags }}" autocapitalize="off">
+    <small class="muted">Leave out bookmarks with any of these tags.</small></label>
+  <label>Read status
+    <select name="filter_unread">
+      <option value="off" {% if b.filter_unread == "off" %}selected{% endif %}>Read &amp; unread</option>
+      <option value="yes" {% if b.filter_unread == "yes" %}selected{% endif %}>Unread only</option>
+      <option value="no" {% if b.filter_unread == "no" %}selected{% endif %}>Read only</option>
+    </select>
+  </label>
+  <input type="hidden" name="filter_shared" value="{{ b.filter_shared }}">
+  <div class="actions">
+    <button class="primary">Save</button>
+    <a href="/bundles">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Bundles · rlinks{% endblock %}
+{% block content %}
+<div class="form">
+  <div class="list-header">
+    <h1>Bundles</h1>
+    <a class="button primary" href="/bundles/new">New bundle</a>
+  </div>
+  <p class="muted">Bundles are saved filters: a search plus tags to include or leave out. They appear in the
+    sidebar of your bookmarks, in this order.</p>
+  {% if bundles.is_empty() %}
+  <p class="muted">No bundles yet.</p>
+  {% else %}
+  <form method="post" action="/bundles/action">
+    <table class="tokens">
+      <thead><tr><th>Name</th><th>Filters</th><th></th></tr></thead>
+      <tbody>
+        {% for b in bundles %}
+        <tr>
+          <td><a href="/bookmarks?bundle={{ b.id }}">{{ b.name }}</a></td>
+          <td class="muted small">
+            {% if !b.search.is_empty() %}“{{ b.search }}” {% endif %}
+            {% if !b.any_tags.is_empty() %}any of {{ b.any_tags }} {% endif %}
+            {% if !b.all_tags.is_empty() %}all of {{ b.all_tags }} {% endif %}
+            {% if !b.excluded_tags.is_empty() %}without {{ b.excluded_tags }} {% endif %}
+            {% if b.filter_unread == "yes" %}unread {% else if b.filter_unread == "no" %}read {% endif %}
+          </td>
+          <td><div class="row-actions">
+            {% if !loop.first %}<button class="link" name="up" value="{{ b.id }}" aria-label="Move {{ b.name }} up">↑</button>{% endif %}
+            {% if !loop.last %}<button class="link" name="down" value="{{ b.id }}" aria-label="Move {{ b.name }} down">↓</button>{% endif %}
+            <a href="/bundles/{{ b.id }}/edit">Edit</a>
+            <button class="link danger" name="delete" value="{{ b.id }}"
+                    onclick="return confirm('Delete this bundle? Your bookmarks stay as they are.')">Delete</button>
+          </div></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

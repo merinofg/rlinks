@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ b.resolved_title() }} · rlinks{% endblock %}
+{% block content %}
+<dialog id="details" class="details" open aria-labelledby="details-title">
+  <header>
+    <h2 id="details-title"><a href="{{ b.href() }}" target="_blank" rel="noopener">{{ b.resolved_title() }}</a></h2>
+    <a class="close" href="/bookmarks" data-close aria-label="Close">✕</a>
+  </header>
+  <p class="url"><a href="{{ b.href() }}" target="_blank" rel="noopener">{{ b.url }}</a></p>
+  {% if !b.tag_names.is_empty() %}
+  <p class="bm-tags">{% for t in b.tag_names %}<a href="/bookmarks?q=%23{{ t|urlencode }}">#{{ t }}</a> {% endfor %}</p>
+  {% endif %}
+  {% if !b.description.is_empty() %}<p>{{ b.description }}</p>{% endif %}
+  {% if !notes_html.is_empty() %}
+  <h3>Notes</h3>
+  <div class="notes">{{ notes_html|safe }}</div>
+  {% endif %}
+  <dl class="dates">
+    <dt>Added</dt><dd title="{{ b.date_added }}">{{ added }}</dd>
+    <dt>Modified</dt><dd title="{{ b.date_modified }}">{{ modified }}</dd>
+    <dt>Status</dt><dd>{% if b.is_archived %}Archived{% else %}Active{% endif %}{% if b.unread %} · Unread{% endif %}{% if b.shared %} · Shared{% endif %}</dd>
+  </dl>
+  <h3>Files</h3>
+  {% if files.is_empty() %}
+  <p class="muted small">No snapshots or files yet.</p>
+  {% else %}
+  <ul class="files">
+    {% for f in files %}
+    <li>
+      <span class="file-name">{{ f.a.display_name }}</span>
+      <span class="muted small">{% if !f.size.is_empty() %}{{ f.size }} · {% endif %}{{ f.created }}</span>
+      {% if f.a.status == "pending" %}<span class="badge static">saving…</span>
+      {% else if f.a.status == "failure" %}<span class="badge static danger">failed</span>
+      {% else %}<a href="/assets/{{ f.a.uid }}/read" target="_blank" rel="noopener">View</a>
+      <a href="/assets/{{ f.a.uid }}" hx-boost="false">Download</a>{% endif %}
+      <form method="post" action="/assets/{{ f.a.uid }}/delete">
+        <button class="link danger" onclick="return confirm('Delete this file?')">Delete</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <div class="file-actions">
+    <form method="post" action="/bookmarks/{{ b.id }}/assets/snapshot"><button>Save HTML snapshot</button></form>
+    <form method="post" action="/bookmarks/{{ b.id }}/assets/upload" enctype="multipart/form-data" hx-boost="false" class="inline-form">
+      <input type="file" name="file" required aria-label="File to attach">
+      <button>Upload</button>
+    </form>
+  </div>
+
+  <form class="actions" method="post" action="{{ action_url }}">
+    <a href="/bookmarks/{{ b.id }}/edit">Edit</a>
+    {% if b.unread %}<button name="mark_as_read" value="{{ b.id }}">Mark as read</button>{% endif %}
+    {% if b.is_archived %}<button name="unarchive" value="{{ b.id }}">Unarchive</button>
+    {% else %}<button name="archive" value="{{ b.id }}">Archive</button>{% endif %}
+    <button class="danger" name="remove" value="{{ b.id }}" onclick="return confirm('Delete this bookmark?')">Delete</button>
+  </form>
+</dialog>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }} · rlinks{% endblock %}
+{% block nav %}
+{% if anonymous %}
+<header class="nav">
+  <a class="brand" href="/bookmarks/shared"><img src="/static/icon.svg" alt="" width="24" height="24"> rlinks</a>
+  <nav><a class="button" href="/login">Log in</a></nav>
+</header>
+{% else %}{% include "nav.html" %}{% endif %}
+{% endblock %}
+{% block content %}
+<div class="layout" id="list">
+  <section class="main">
+    <div class="list-header">
+      <h1>{{ heading }}</h1>
+      <form class="search" method="get" action="{{ base }}" role="search">
+        <input type="search" name="q" value="{{ q.q }}" placeholder="Search for words or #tags" aria-label="Search">
+        <select name="sort" aria-label="Sort" onchange="this.form.requestSubmit()">
+          {% for (value, label) in sorts.iter() %}
+          <option value="{{ value }}" {% if q.sort.as_str() == *value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select name="unread" aria-label="Read status" onchange="this.form.requestSubmit()">
+          <option value="">Read &amp; unread</option>
+          <option value="yes" {% if q.unread == "yes" %}selected{% endif %}>Unread only</option>
+          <option value="no" {% if q.unread == "no" %}selected{% endif %}>Read only</option>
+        </select>
+        {% if !q.user.is_empty() %}<input type="hidden" name="user" value="{{ q.user }}">{% endif %}
+        <button>Search</button>
+      </form>
+    </div>
+
+    <form id="bookmarks-form" method="post" action="{{ action_url }}"
+          hx-post="{{ action_url }}" hx-target="#list" hx-select="#list" hx-swap="outerHTML" hx-push-url="false"
+          hx-disinherit="hx-target hx-select hx-swap hx-push-url">
+      {% if !rows.is_empty() && !shared_view %}
+      <div class="bulk">
+        <label class="inline"><input type="checkbox" data-select-all> Select all</label>
+        <select name="bulk_action" aria-label="Bulk action">
+          {% if archived %}<option value="bulk_unarchive">Unarchive</option>
+          {% else %}<option value="bulk_archive">Archive</option>{% endif %}
+          <option value="bulk_delete">Delete</option>
+          <option value="bulk_tag">Add tags</option>
+          <option value="bulk_untag">Remove tags</option>
+          <option value="bulk_read">Mark as read</option>
+          <option value="bulk_unread">Mark as unread</option>
+          {% if sharing %}<option value="bulk_share">Share</option>
+          <option value="bulk_unshare">Unshare</option>{% endif %}
+        </select>
+        <input name="bulk_tag_string" placeholder="tags (for add/remove)" aria-label="Tags for bulk action">
+        <button name="bulk_execute" value="1"
+                onclick="return this.form.bulk_action.value !== 'bulk_delete' || confirm('Delete the selected bookmarks?')">Execute</button>
+      </div>
+      {% endif %}
+
+      <ul class="bookmarks" style="--desc-lines: {{ desc_lines }}">
+        {% for row in rows %}
+        <li>
+          {% if !shared_view %}<input type="checkbox" name="bookmark_id" value="{{ row.b.id }}" aria-label="Select bookmark">{% endif %}
+          <div class="bm">
+            <a class="bm-title" href="{{ row.b.href() }}" target="{{ link_target }}" rel="noopener">
+              {%- if show_favicons -%}
+              {%- if let Some(src) = row.favicon %}<img class="favicon" src="{{ src }}" alt="" width="16" height="16" loading="lazy">
+              {%- else %}<span class="favicon"></span>{% endif -%}
+              {%- endif %}{{ row.b.resolved_title() }}</a>
+            {% if display_url %}<p class="bm-url"><a href="{{ row.b.href() }}" target="{{ link_target }}" rel="noopener">{{ row.b.url }}</a></p>{% endif %}
+            {% if !row.b.description.is_empty() %}<p class="bm-desc">{{ row.b.description }}</p>{% endif %}
+            {% if !row.tags.is_empty() %}
+            <p class="bm-tags">{% for t in row.tags %}<a href="{{ t.href }}">#{{ t.name }}</a> {% endfor %}</p>
+            {% endif %}
+            {% if let Some(n) = row.notes_html %}<div class="notes bm-notes">{{ n|safe }}</div>{% endif %}
+            <div class="bm-meta">
+              {% if let Some(d) = row.date %}<span title="{{ row.b.date_added }}">{{ d }}</span>{% endif %}
+              {% if shared_view %}
+              <span>by <a href="{{ base }}?user={{ row.b.owner_name|urlencode }}">{{ row.b.owner_name }}</a></span>
+              {% if let Some(a) = row.archive_url %}<a href="{{ a }}" target="_blank" rel="noopener">Wayback</a>{% endif %}
+              {% else %}
+              {% if row.b.unread %}<button class="badge" name="mark_as_read" value="{{ row.b.id }}" title="Mark as read">Unread</button>{% endif %}
+              {% if row.b.shared %}<button class="badge" name="unshare" value="{{ row.b.id }}" title="Unshare">Shared</button>{% endif %}
+              <a href="/bookmarks/{{ row.b.id }}/details" hx-get="/bookmarks/{{ row.b.id }}/details"
+                 hx-target="#modal" hx-select="#details" hx-swap="innerHTML" hx-push-url="false">View</a>
+              <a href="/bookmarks/{{ row.b.id }}/edit?return_url={{ return_url|urlencode }}">Edit</a>
+              {% if let Some(a) = row.archive_url %}<a href="{{ a }}" target="_blank" rel="noopener">Wayback</a>{% endif %}
+              {% if let Some(snap) = row.b.latest_snapshot_uid %}<a href="/assets/{{ snap }}/read" target="_blank" rel="noopener">Snapshot</a>{% endif %}
+              {% if archived %}
+              <button class="link" name="unarchive" value="{{ row.b.id }}">Unarchive</button>
+              {% else %}
+              <button class="link" name="archive" value="{{ row.b.id }}">Archive</button>
+              {% endif %}
+              <button class="link danger" name="remove" value="{{ row.b.id }}"
+                      onclick="return confirm('Delete this bookmark?')">Remove</button>
+              {% endif %}
+            </div>
+          </div>
+          {% if show_previews %}{% if let Some(src) = row.preview %}
+          <img class="preview" src="{{ src }}" alt="" loading="lazy">
+          {% endif %}{% endif %}
+        </li>
+        {% else %}
+        <li class="empty muted">
+          {% if !q.q.is_empty() || !q.unread.is_empty() %}No bookmarks match your search.
+          {% else if shared_view %}Nothing shared yet.{% if !anonymous %} Turn on sharing in
+          <a href="/settings/general">Settings</a>, then tick “Share” on a bookmark.{% endif %}
+          {% else if archived %}Nothing archived yet. Archive bookmarks to keep them without cluttering your list.
+          {% else %}No bookmarks yet. <a href="/bookmarks/new">Add your first one</a>, or save pages straight from
+          your browser with the extension (see <a href="/settings/integrations">Settings → Integrations</a>).{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </form>
+
+    {% if pages > 1 %}
+    <nav class="pagination" aria-label="Pagination">
+      {% if let Some(p) = prev %}<a href="{{ p }}">← Previous</a>{% endif %}
+      <span class="muted">Page {{ page }} of {{ pages }} · {{ total }} bookmarks</span>
+      {% if let Some(n) = next %}<a href="{{ n }}">Next →</a>{% endif %}
+    </nav>
+    {% endif %}
+  </section>
+
+  <aside class="side">
+    {% if shared_view && !users.is_empty() %}
+    <h2>Users</h2>
+    <ul class="bundles">
+      {% for u in users %}
+      <li><a href="{{ u.href }}" {% if u.active %}aria-current="page"{% endif %}>{{ u.name }}</a></li>
+      {% endfor %}
+    </ul>
+    {% if let Some(clear) = clear_user %}<p class="small"><a href="{{ clear }}">× All users</a></p>{% endif %}
+    {% endif %}
+    {% if !hide_bundles %}
+    <h2>Bundles <a class="side-link" href="/bundles">Manage</a></h2>
+    {% if bundles.is_empty() %}
+    <p class="muted small">Save searches as bundles. <a href="/bundles/new">Create one</a></p>
+    {% else %}
+    <ul class="bundles">
+      {% for b in bundles %}
+      <li><a href="{{ b.href }}" {% if b.active %}aria-current="page"{% endif %}>{{ b.name }}</a></li>
+      {% endfor %}
+    </ul>
+    {% if let Some(clear) = clear_bundle %}<p class="small"><a href="{{ clear }}">× Show all bookmarks</a></p>{% endif %}
+    {% endif %}
+    {% endif %}
+    {% if !selected_tags.is_empty() %}
+    <h2>Selected tags</h2>
+    <p class="tag-cloud">{% for t in selected_tags %}<a class="selected" href="{{ t.href }}" title="Remove from search">−{{ t.name }}</a> {% endfor %}</p>
+    {% endif %}
+    <h2>Tags</h2>
+    {% for g in cloud %}
+    <p class="tag-cloud">{% if !g.letter.is_empty() %}<b>{{ g.letter }}</b> {% endif %}{% for t in g.links %}<a href="{{ t.href }}">{{ t.name }}</a> {% endfor %}</p>
+    {% else %}
+    <p class="muted">No tags.</p>
+    {% endfor %}
+  </aside>
+</div>
+<div id="modal"></div>
+{% endblock %}

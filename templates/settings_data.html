@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Import & export · rlinks{% endblock %}
+{% block content %}
+<div class="form">
+  <h1>Settings</h1>
+  {% let tab = "data" %}{% include "settings_nav.html" %}
+  {% if let Some(n) = notice %}<p class="notice" role="status">{{ n }}</p>{% endif %}
+  {% if let Some(e) = error %}<p class="error" role="alert">{{ e }}</p>{% endif %}
+
+  <form class="card" method="post" action="/settings/import" enctype="multipart/form-data" hx-boost="false">
+    <h2>Import</h2>
+    <p class="muted">Upload a bookmarks file exported from your browser or from linkding (Netscape HTML).
+      Bookmarks you already have are updated, not duplicated; tags, notes and read status come along.</p>
+    <label>Bookmarks file <input type="file" name="file" accept=".html,.htm,text/html" required></label>
+    <label class="inline"><input type="checkbox" name="map_private_flag"> Share bookmarks the file marks as public</label>
+    <div class="actions"><button class="primary">Import</button></div>
+  </form>
+
+  <section class="card">
+    <h2>Export</h2>
+    <p class="muted">Download all your bookmarks, archived ones included, as a Netscape HTML file that browsers
+      and linkding can import.</p>
+    <a class="button" href="/settings/export" hx-boost="false" download>Download bookmarks.html</a>
+  </section>
+</div>
+{% endblock %}

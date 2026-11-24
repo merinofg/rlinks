@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>rlinks — {{ title }}</title>
+    <link>{{ link }}</link>
+    <description>{{ title }}</description>
+    {%- for i in items %}
+    <item>
+      <title>{{ i.title }}</title>
+      <link>{{ i.link }}</link>
+      <description>{{ i.description }}</description>
+      <guid isPermaLink="true">{{ i.link }}</guid>
+      {%- if !i.pub_date.is_empty() %}
+      <pubDate>{{ i.pub_date }}</pubDate>
+      {%- endif %}
+      {%- for c in i.categories %}
+      <category>{{ c }}</category>
+      {%- endfor %}
+    </item>
+    {%- endfor %}
+  </channel>
+</rss>

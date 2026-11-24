@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}rlinks{% endblock %}</title>
+  <meta name="description" content="rlinks — a fast, self-hosted bookmark manager.">
+  <meta name="theme-color" content="#5755d9">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="search" type="application/opensearchdescription+xml" title="rlinks" href="/opensearch.xml">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script>
+    // Theme and custom CSS from the prefs cookie (set at login / on save), applied before paint.
+    try {
+      const m = document.cookie.match(/(?:^|; )prefs=([^;]*)/);
+      if (m) {
+        const [theme, css, admin] = decodeURIComponent(m[1]).split(":");
+        if (admin === "1") document.documentElement.dataset.admin = "";
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+        if (/^[0-9a-f]+$/.test(css || "")) {
+          const l = document.createElement("link");
+          l.rel = "stylesheet"; l.href = "/custom_css?h=" + css;
+          document.head.appendChild(l);
+        }
+      }
+    } catch (e) {}
+  </script>
+  <script src="/static/htmx-2.0.4.min.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body hx-boost="true">
+  {% block nav %}{% include "nav.html" %}{% endblock %}
+  <main>{% block content %}{% endblock %}</main>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }} · rlinks{% endblock %}
+{% block content %}
+<form class="card form" method="post" action="{{ action }}">
+  <h1>{{ heading }}</h1>
+  {% if let Some(e) = error %}<p class="error" role="alert">{{ e }}</p>{% endif %}
+  <label>URL <input name="url" type="url" value="{{ input.url }}" required autofocus
+    {% if is_new %}hx-get="/bookmarks/new/check" hx-trigger="load, change" hx-target="#url-check"
+    hx-swap="outerHTML" hx-sync="this:replace" hx-indicator="#fetching"{% endif %}></label>
+  {% if is_new %}
+  <small id="fetching" class="htmx-indicator fetching" role="status">Fetching title and description…</small>
+  <div id="url-check"></div>
+  {% endif %}
+  <label>Tags <input name="tag_string" value="{{ input.tag_string }}" autocomplete="off" autocapitalize="off">
+    <small class="muted">Separate tags with spaces.</small></label>
+  <label>Title <input name="title" value="{{ input.title }}" maxlength="512"></label>
+  <label>Description <textarea name="description" rows="3">{{ input.description }}</textarea></label>
+  <label>Notes <textarea name="notes" rows="5">{{ input.notes }}</textarea>
+    <small class="muted">Markdown supported.</small></label>
+  <label class="inline"><input type="checkbox" name="unread" {% if input.unread %}checked{% endif %}> Mark as unread</label>
+  {% if sharing %}
+  <label class="inline"><input type="checkbox" name="shared" {% if input.shared %}checked{% endif %}> Share with other users</label>
+  {% else if input.shared %}<input type="hidden" name="shared" value="on">{#- keep it while sharing is off -#}
+  {% endif %}
+  <div class="actions">
+    <button class="primary">Save</button>
+    <a href="{{ return_url }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
