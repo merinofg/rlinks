@@ -4,7 +4,7 @@ use rlinks::scrape::Fetcher;
 use rlinks::{AppState, config, domain::users, web};
 use std::sync::Arc;
 
-const USAGE: &str = "usage: rlinks [serve | migrate | create-user <username> <password> [--admin]]";
+const USAGE: &str = "usage: rlinks [serve | migrate | create-user <username> <password> [--admin] | sql <statement>...]";
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -26,6 +26,14 @@ async fn main() -> Result<()> {
                 bail!("user {name:?} already exists");
             }
             println!("created user {name}");
+            Ok(())
+        }
+        // Each argument is one statement; all run atomically. Rows print as JSON lines.
+        ["sql", sql @ ..] if !sql.is_empty() => {
+            let stmts = sql.iter().map(|s| rlinks::db::Stmt { sql: s.to_string(), params: vec![] }).collect();
+            for row in db.batch(stmts).await?.into_iter().flatten() {
+                println!("{}", serde_json::Value::Object(row));
+            }
             Ok(())
         }
         _ => bail!(USAGE),
